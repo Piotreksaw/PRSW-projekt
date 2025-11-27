@@ -124,6 +124,9 @@ dmypy.json
 .pyre/
 
 
+# others
+.idea
+
 # LATEX
 
 *.acn
