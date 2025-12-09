@@ -115,8 +115,8 @@ print(f"Skala: {px_per_cm:.2f} px / cm")
 
 circles = cv.HoughCircles(
     img, cv.HOUGH_GRADIENT, 1, 200,
-    param1=100, param2=130,
-    minRadius=20, maxRadius=500
+    param1=100, param2=100,
+    minRadius=20, maxRadius=250
 )
 
 circles = np.uint16(np.around(circles))
@@ -159,8 +159,8 @@ print(f"\nSUMA MONET: {total_value:.2f} pln\n")
 # -----------------------------------------
 # Wyświetlenie i zapis wyniku
 # -----------------------------------------
-
-cv.imshow('detected circles', cimg)
+preview = cv.resize(cimg, None, fx=0.6, fy=0.6)
+cv.imshow('detected circles', preview)
 cv.waitKey(0)
 cv.destroyAllWindows()
-cv.imwrite('wynik_detekcji.png', cimg)
+cv.imwrite('wynik_detekcji.png', preview)
