@@ -3,19 +3,19 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 
-scale = 0.4
+scale = 1
 
 
 # -----------------------------------------
 # Średnice monet w mm (prawidłowe wartości)
 # -----------------------------------------
 coins = {
-    "1 gr": 15.5,
-    "2 gr": 17.5,
-    "5 gr": 19.5,
-    "10 gr": 16.5,
-    "20 gr": 18.5,
-    "50 gr": 20.5,
+    # "1 gr": 15.5,
+    # "2 gr": 17.5,
+    # "5 gr": 19.5,
+    # "10 gr": 16.5,
+    # "20 gr": 18.5,
+    # "50 gr": 20.5,
     "1 pln": 23.0,
     "2 pln": 21.5,
     "5 pln": 24.0
@@ -23,12 +23,12 @@ coins = {
 
 # wartość nominalna w pln
 values = {
-    "1 gr": 0.01,
-    "2 gr": 0.02,
-    "5 gr": 0.05,
-    "10 gr": 0.10,
-    "20 gr": 0.20,
-    "50 gr": 0.50,
+    # "1 gr": 0.01,
+    # "2 gr": 0.02,
+    # "5 gr": 0.05,
+    # "10 gr": 0.10,
+    # "20 gr": 0.20,
+    # "50 gr": 0.50,
     "1 pln": 1.00,
     "2 pln": 2.00,
     "5 pln": 5.00
@@ -36,12 +36,12 @@ values = {
 
 # kolory (BGR)
 colors = {
-    "1 gr":  (0, 255, 255),
-    "2 gr":  (0, 165, 255),
-    "5 gr":  (0, 140, 255),
-    "10 gr": (0, 255, 0),
-    "20 gr": (255, 255, 0),
-    "50 gr": (255, 0, 0),
+    # "1 gr":  (0, 255, 255),
+    # "2 gr":  (0, 165, 255),
+    # "5 gr":  (0, 140, 255),
+    # "10 gr": (0, 255, 0),
+    # "20 gr": (255, 255, 0),
+    # "50 gr": (255, 0, 0),
     "1 pln":  (255, 0, 255),
     "2 pln":  (0, 100, 255),
     "5 pln":  (0, 0, 255)
@@ -63,11 +63,11 @@ def mouse_callback(event, x, y, flags, param):
 # Wczytywanie zdjęcia
 # -----------------------------------------
 
-img_path = ".//photos/IMG_20221011_172837.jpg"
+img_path = ".//photos/drewno_cieple.jfif"
 print(img_path)
 
 img = cv.imread(img_path, 0)
-img = cv.resize(img, None, fx=scale, fy=scale)
+# img = cv.resize(img, None, fx=scale, fy=scale)
 img = cv.rotate(img, cv.ROTATE_90_CLOCKWISE)
 img = cv.medianBlur(img, 3)
 cimg = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
@@ -115,8 +115,8 @@ print(f"Skala: {px_per_cm:.2f} px / cm")
 
 circles = cv.HoughCircles(
     img, cv.HOUGH_GRADIENT, 1, 200,
-    param1=100, param2=100,
-    minRadius=20, maxRadius=250
+    param1=120, param2=100,
+    minRadius=20, maxRadius=150
 )
 
 circles = np.uint16(np.around(circles))
@@ -138,14 +138,27 @@ for i in circles[0, :]:
     diameter_cm = diameter_px / px_per_cm
     diameter_mm = diameter_cm * 10.0
 
-    # Wybór najbliższego nominału (minimalna różnica)
-    best_coin = min(coins.keys(), key=lambda c: abs(coins[c] - diameter_mm))
-    color = colors[best_coin]
+    # dopasowanie monety do tabeli rozmiarów coins
+    diffs = {coin: abs(coins[coin] - diameter_mm) for coin in coins}
 
-    # dodawanie wartości
-    total_value += values[best_coin]
+    # znajdź najlepsze dopasowanie
+    best_coin = min(diffs, key=diffs.get)
+    best_diff = diffs[best_coin]
 
-    print(f"{best_coin}: zmierzone {diameter_mm:.1f} mm")
+    # jeśli różnica większa niż 1 mm → nie klasyfikujemy
+    if best_diff > 1.50:
+        best_coin = None
+        color = (0, 0, 0)  # albo nie koloruj wcale
+    else:
+        color = colors[best_coin]
+
+    if best_coin is not None:
+        print(f"{best_coin}: zmierzone {diameter_mm:.1f} mm")
+        total_value += values[best_coin]
+    else:
+        print(f"Nierozpoznana moneta: średnica {diameter_mm:.1f} mm")
+
+    # print(f"{best_coin}: zmierzone {diameter_mm:.1f} mm")
 
     # rysowanie okręgu i podpisu
     cv.circle(cimg, (cx, cy), radius_px, color, 3)
@@ -160,7 +173,7 @@ print(f"\nSUMA MONET: {total_value:.2f} pln\n")
 # Wyświetlenie i zapis wyniku
 # -----------------------------------------
 preview = cv.resize(cimg, None, fx=0.6, fy=0.6)
-cv.imshow('detected circles', preview)
+cv.imshow('detected circles', cimg)
 cv.waitKey(0)
 cv.destroyAllWindows()
-cv.imwrite('wynik_detekcji.png', preview)
+cv.imwrite('wynik_detekcji.png', cimg)
