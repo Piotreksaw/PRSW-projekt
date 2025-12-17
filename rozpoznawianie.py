@@ -56,7 +56,7 @@ def mouse_callback(event, x, y, flags, param):
     if event == cv.EVENT_LBUTTONDOWN:
         param["lista"].append((x, y))
         param["points"] += 1
-        cv.circle(param["img"], (x, y), 5, (0, 0, 255), -1)
+        cv.circle(param["img"], (x, y), 5, (0, 100, 0), -1)
 
 
 # -----------------------------------------
@@ -116,7 +116,7 @@ print(f"Skala: {px_per_cm:.2f} px / cm")
 circles = cv.HoughCircles(
     img, cv.HOUGH_GRADIENT, 1, 200,
     param1=120, param2=100,
-    minRadius=20, maxRadius=150
+    minRadius=80, maxRadius=150
 )
 
 circles = np.uint16(np.around(circles))
