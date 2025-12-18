@@ -3,12 +3,10 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 
-scale = 1
+scale = 0.3
 
 
-# -----------------------------------------
-# Średnice monet w mm (prawidłowe wartości)
-# -----------------------------------------
+#srednice
 coins = {
     # "1 gr": 15.5,
     # "2 gr": 17.5,
@@ -47,22 +45,14 @@ colors = {
     "5 pln":  (0, 0, 255)
 }
 
-
-# -----------------------------------------
-# Callback myszy
-# -----------------------------------------
-
+# callback
 def mouse_callback(event, x, y, flags, param):
     if event == cv.EVENT_LBUTTONDOWN:
         param["lista"].append((x, y))
         param["points"] += 1
         cv.circle(param["img"], (x, y), 5, (0, 100, 0), -1)
 
-
-# -----------------------------------------
-# Wczytywanie zdjęcia
-# -----------------------------------------
-
+# wczytywanie
 img_path = ".//photos/drewno_cieple.jfif"
 print(img_path)
 
@@ -78,10 +68,7 @@ if img is None:
     exit()
 
 
-# -----------------------------------------
-# Zaznaczenie odcinka 5 cm
-# -----------------------------------------
-
+# zaznaczenie 5cm
 while True:
     cv.imshow("Zaznacz odcinek 5cm na obrazku", img)
     if param["points"] == 2:
@@ -109,9 +96,7 @@ print(f"Odległość w pikselach: {px_distance:.2f}")
 print(f"Skala: {px_per_cm:.2f} px / cm")
 
 
-# -----------------------------------------
-# Detekcja monet (HoughCircles)
-# -----------------------------------------
+# Detekcja monet
 
 circles = cv.HoughCircles(
     img, cv.HOUGH_GRADIENT, 1, 200,
@@ -124,13 +109,10 @@ print(f"Wykryte koła: {circles}\n")
 
 total_value = 0.0
 
-print("---- ROZPOZNANE MONETY ----")
+print("Wykryte monety")
 
 
-# -----------------------------------------
-# Klasyfikacja monet + kolorowanie
-# -----------------------------------------
-
+#klasyfikacja + dodanie kolorowych obrysow
 for i in circles[0, :]:
     cx, cy, radius_px = i
 
@@ -141,14 +123,14 @@ for i in circles[0, :]:
     # dopasowanie monety do tabeli rozmiarów coins
     diffs = {coin: abs(coins[coin] - diameter_mm) for coin in coins}
 
-    # znajdź najlepsze dopasowanie
+    # szukanie najlepszego dopasowania
     best_coin = min(diffs, key=diffs.get)
     best_diff = diffs[best_coin]
 
-    # jeśli różnica większa niż 1 mm → nie klasyfikujemy
+    # ograniczenie roznicy w oczekiwanej srednicy
     if best_diff > 1.50:
         best_coin = None
-        color = (0, 0, 0)  # albo nie koloruj wcale
+        color = (0, 0, 0)
     else:
         color = colors[best_coin]
 
@@ -160,7 +142,7 @@ for i in circles[0, :]:
 
     # print(f"{best_coin}: zmierzone {diameter_mm:.1f} mm")
 
-    # rysowanie okręgu i podpisu
+    # rysowanie okregow
     cv.circle(cimg, (cx, cy), radius_px, color, 3)
     cv.putText(cimg, best_coin, (cx - 40, cy - 10),
                cv.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
@@ -169,9 +151,7 @@ for i in circles[0, :]:
 print(f"\nSUMA MONET: {total_value:.2f} pln\n")
 
 
-# -----------------------------------------
-# Wyświetlenie i zapis wyniku
-# -----------------------------------------
+# wyswietlanie i zapis
 preview = cv.resize(cimg, None, fx=0.6, fy=0.6)
 cv.imshow('detected circles', cimg)
 cv.waitKey(0)
