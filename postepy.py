@@ -1,9 +1,12 @@
+
+# Algorytm wyznaczenia skali obrazu
+
 import cv2 as cv
 import numpy as np
 import os
 import matplotlib.pyplot as plt
 
-scale = 1
+scale = 0.3
 
 
 #srednice
@@ -57,7 +60,7 @@ img_path = ".//photos/drewno_cieple.jfif"
 print(img_path)
 
 img = cv.imread(img_path, 0)
-img = cv.resize(img, None, fx=scale, fy=scale)
+# img = cv.resize(img, None, fx=scale, fy=scale)
 img = cv.rotate(img, cv.ROTATE_90_CLOCKWISE)
 img = cv.medianBlur(img, 3)
 cimg = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
@@ -105,8 +108,6 @@ circles = cv.HoughCircles(
 )
 
 circles = np.uint16(np.around(circles))
-if circles is None:
-    print("nie wykryto monet")
 print(f"Wykryte koła: {circles}\n")
 
 total_value = 0.0
@@ -159,3 +160,6 @@ cv.imshow('detected circles', cimg)
 cv.waitKey(0)
 cv.destroyAllWindows()
 cv.imwrite('wynik_detekcji.png', cimg)
+
+
+
