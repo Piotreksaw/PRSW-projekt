@@ -3,7 +3,7 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 
-scale = 0.6
+scale = 0.4
 
 
 #srednice
@@ -114,8 +114,10 @@ while True:
         minDist=min_dist,
         param1=p1_val,
         param2=p2_val,
-        minRadius=int(1.6 * px_per_cm),
-        maxRadius=int(2.6 * px_per_cm)
+        # minRadius=int(1.6 * px_per_cm),
+        # maxRadius=int(2.6 * px_per_cm)
+        minRadius=80,
+        maxRadius=150
     )
 
     total_value = 0.0
