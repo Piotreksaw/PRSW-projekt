@@ -175,3 +175,6 @@ dmypy.json
 .bak 
 .mtc
 build/
+
+# efects
+wynik_detekcji.png
