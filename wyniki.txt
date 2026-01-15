@@ -1,0 +1,6 @@
+wariant=skaner, plik=skaner_1.jpg, suma=41.00, monety=16
+wariant=skaner, plik=skaner_2.jpg, suma=23.00, monety=11
+wariant=skaner, plik=skaner_3.jpg, suma=18.00, monety=12
+wariant=skaner, plik=skaner_4.jpg, suma=15.00, monety=8
+wariant=skaner, plik=skaner_5.jpg, suma=22.00, monety=9
+wariant=biurko, plik=biurko_1.JPG, suma=27.00, monety=14

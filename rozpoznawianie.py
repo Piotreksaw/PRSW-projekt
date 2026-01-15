@@ -179,3 +179,7 @@ cv.imwrite("wynik_detekcji.png", preview_final)
 print(f"\nZapisano wynik. Suma: {total_value:.2f} PLN")
 cv.waitKey(0)
 cv.destroyAllWindows()
+
+
+# w zjeciu z detekcją do pokazaniu suwaków zrobić nowy, który
+# dodać opis preprocessingu 
