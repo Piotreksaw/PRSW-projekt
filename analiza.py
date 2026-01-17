@@ -4,17 +4,16 @@ import os
 
 # ===================== KONFIGURACJA =====================
 
-
-# skany ze zdjęcia w 600 dpi
 PHOTOS_DIR = "photos"
 RESULTS_DIR = "wyniki"
 MAX_IMAGES_PER_VARIANT = 10
 SCALE_DISPLAY = 0.8
+IGNORE_BOTTOM_PERCENT = 0.1
 
 wariant = {
-    "skaner": {"param1": 184, "param2": 40},
-    "biurko": {"param1": 206, "param2": 45},
-    "flesz":  {"param1": 260, "param2": 45}
+    # "skaner": {"param1": 150, "param2": 40, "dp": 1.0},
+    "biurko": {"param1": 206, "param2": 45, "dp": 1.0},
+    # "flesz":  {"param1": 150, "param2": 60, "dp": 1.0}
 }
 
 coins = {
@@ -69,20 +68,31 @@ with open("wyniki.txt", "w", encoding="utf-8") as wyniki_txt:
 
             img_path = os.path.join(folder, img_name)
             img = cv.imread(img_path)
-
             if img is None:
                 continue
 
             img = cv.resize(img, None, fx=SCALE_DISPLAY, fy=SCALE_DISPLAY)
-            img = cv.medianBlur(img, 7)
+            h_img, w_img = img.shape[:2]
+
             gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+            clahe = cv.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+            gray = clahe.apply(gray)
+            gray_blur = cv.GaussianBlur(gray, (7, 7), 1.5)
+
+            ignore_h = int(h_img * IGNORE_BOTTOM_PERCENT)
+            gray_for_hough = gray_blur.copy()
+            cv.rectangle(gray_for_hough, (0, h_img - ignore_h), (w_img, h_img), 0, -1)
+
+            hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)
+            sat = hsv[:, :, 1]
+
 
             # ---------- KALIBRACJA SKALI ----------
             calib = {"points": 0, "pts": [], "img": img.copy()}
-
             win_name = f"Skala 1cm: {img_name}"
+
             cv.namedWindow(win_name, cv.WINDOW_NORMAL)
-            cv.imshow(win_name, calib["img"])
+            # cv.imshow(win_name, calib["img"])
             cv.setMouseCallback(win_name, mouse_callback, calib)
 
             while calib["points"] < 2:
@@ -91,7 +101,6 @@ with open("wyniki.txt", "w", encoding="utf-8") as wyniki_txt:
                     break
 
             cv.destroyAllWindows()
-
             if calib["points"] < 2:
                 continue
 
@@ -100,17 +109,17 @@ with open("wyniki.txt", "w", encoding="utf-8") as wyniki_txt:
             px_per_cm = np.linalg.norm(p1 - p2)
 
             # ---------- ZAKRES PROMIENI ----------
-            min_d_mm = min(coins.values()) - 2.0
-            max_d_mm = max(coins.values()) + 2.0
+            min_d_mm = min(coins.values()) - 1.5
+            max_d_mm = max(coins.values()) + 1.5
 
             minR = int((min_d_mm / 10 * px_per_cm) / 2)
             maxR = int((max_d_mm / 10 * px_per_cm) / 2)
 
             # ---------- HOUGH CIRCLES ----------
             circles = cv.HoughCircles(
-                gray,
+                gray_for_hough,
                 cv.HOUGH_GRADIENT,
-                dp=1.0,
+                dp=hough_params["dp"],
                 minDist=int(1.8 * px_per_cm),
                 param1=hough_params["param1"],
                 param2=hough_params["param2"],
@@ -129,14 +138,24 @@ with open("wyniki.txt", "w", encoding="utf-8") as wyniki_txt:
                     diffs = {k: abs(v - diameter_mm) for k, v in coins.items()}
                     best = min(diffs, key=diffs.get)
 
-                    if diffs[best] < 0.8:
+                    tolerance = 0.8 + 0.04 * diameter_mm
+
+                    mask_coin = np.zeros_like(gray)
+                    cv.circle(mask_coin, (cx, cy), r, 255, -1)
+                    mean_sat = cv.mean(sat, mask=mask_coin)[0]
+
+                    if diffs[best] < tolerance:
+
+                        if best == "1 pln" and mean_sat > 55:
+                            best = "2 pln"
+                        elif best in ["2 pln", "5 pln"] and mean_sat < 40:
+                            best = "1 pln"
+
+
                         color = colors[best]
                         label = best
                         total_value += values[best]
                         detected += 1
-                    else:
-                        color = (0, 255, 255)
-                        label = "?"
 
                     cv.circle(preview, (cx, cy), r, color, 4)
                     cv.putText(
@@ -163,5 +182,17 @@ with open("wyniki.txt", "w", encoding="utf-8") as wyniki_txt:
             )
 
             print(f"  {img_name} -> {total_value:.2f} PLN")
+
+            # ---------- WYŚWIETLENIE WYNIKU ----------
+            show_name = f"Wynik: {img_name}"
+            cv.namedWindow(show_name, cv.WINDOW_NORMAL)
+            cv.imshow(show_name, preview)
+
+            key = cv.waitKey(0)
+            cv.destroyWindow(show_name)
+
+            if key == 27:  # ESC
+                print("Przerwano przez użytkownika.")
+                exit()
 
 print("\nZAKOŃCZONO PRZETWARZANIE")
