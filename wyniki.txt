@@ -1,5 +1,7 @@
 wariant=biurko, plik=biurko_1.JPG, suma=25.00, monety=17
-wariant=biurko, plik=biurko_2.JPG, suma=16.00, monety=13
-wariant=biurko, plik=biurko_3.JPG, suma=13.00, monety=11
-wariant=biurko, plik=biurko_4.JPG, suma=22.00, monety=16
+wariant=biurko, plik=biurko_2.JPG, suma=17.00, monety=13
+wariant=biurko, plik=biurko_3.JPG, suma=13.00, monety=10
+wariant=biurko, plik=biurko_4.JPG, suma=23.00, monety=16
 wariant=biurko, plik=biurko_5.JPG, suma=18.00, monety=13
+Podsumowanie::
+Wariant: biurko     | Łącznie monet:  69 | Łączna wartość:  96.00 PLN

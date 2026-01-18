@@ -2,7 +2,7 @@ import cv2 as cv
 import numpy as np
 import os
 
-# ===================== KONFIGURACJA =====================
+# konfiguracja
 
 PHOTOS_DIR = "photos"
 RESULTS_DIR = "wyniki"
@@ -11,12 +11,13 @@ SCALE_DISPLAY = 0.8  # skala do zmniejszenia obrazu w przypadku mniejszego monit
 IGNORE_BOTTOM_PERCENT = 0.1
 
 wariant = {
-    "skaner": {"param1": 150, "param2": 40, "dp": 1.0},
-    # "biurko": {"param1": 206, "param2": 45, "dp": 1.0},
-    # "flesz":  {"param1": 150, "param2": 60, "dp": 1.0}
+    # "skaner": {"param1": 150, "param2": 40, "dp": 1.0},
+    "biurko": {"param1": 180, "param2": 45, "dp": 1.0},
+    # "flesz":  {"param1": 150, "param2": 45, "dp": 1.0}
 }
 
-# parametry monet - rozmiar w mm
+# parametry monet
+# rozmiar (w mm)
 coins = {
     "1 pln": 23.0,
     "2 pln": 21.5,
@@ -41,8 +42,7 @@ colors = {
 summary = {}
 
 
-# ===================== CALLBACK MYSZY =====================
-
+#callback myszy
 # uzytkownik wskazuje dwa punkty oddalone o 1 cm
 def mouse_callback(event, x, y, flags, param):
     if event == cv.EVENT_LBUTTONDOWN and param["points"] < 2:
@@ -51,11 +51,10 @@ def mouse_callback(event, x, y, flags, param):
         cv.circle(param["img"], (x, y), 10, (0, 0, 255), -1)
 
 
-# ===================== PRZYGOTOWANIE KATALOGÓW =====================
-
+# przygotowanie folderów
 os.makedirs(RESULTS_DIR, exist_ok=True)
 
-# ===================== PĘTLA GŁÓWNA =====================
+# główna pętla programu
 
 with open("wyniki.txt", "w", encoding="utf-8") as wyniki_txt:
     for nazwa_wariantu, hough_params in wariant.items():
@@ -97,7 +96,7 @@ with open("wyniki.txt", "w", encoding="utf-8") as wyniki_txt:
             hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)
             sat = hsv[:, :, 1]
 
-            # ---------- KALIBRACJA SKALI ----------
+            # kalibracja skali
             # stworzenie listy paramterow rozpoznanych pieniedzy
             calib = {"points": 0, "pts": [], "img": img.copy()}
             win_name = f"Zaznacz odcinek 1cm: {img_name}"
@@ -121,15 +120,18 @@ with open("wyniki.txt", "w", encoding="utf-8") as wyniki_txt:
 
             # dodanie zaznaczonego odcinka do zdjecia na stale, w celu lepszej analizy wynikow
             img_with_scale = img.copy()
+
+            mid_x = int((calib["pts"][0][0] + calib["pts"][1][0]) / 2)
+            mid_y = int((calib["pts"][0][1] + calib["pts"][1][1]) / 2)
+            cv.line(img_with_scale, tuple(calib["pts"][0]), tuple(calib["pts"][1]), (0, 255, 0), 5)
             cv.circle(img_with_scale, tuple(calib["pts"][0]), 10, (0, 0, 255), -1)
             cv.circle(img_with_scale, tuple(calib["pts"][1]), 10, (0, 0, 255), -1)
-            cv.line(img_with_scale, tuple(calib["pts"][0]), tuple(calib["pts"][1]), (0, 255, 0), 5)
             cv.putText(img_with_scale, "1cm",
-                       (calib["pts"][0][0], calib["pts"][0][1] - 10),
+                       (mid_x - 40, mid_y - 15),
                        cv.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 3
                        )
 
-            # ---------- ZAKRES PROMIENI ----------
+            # max i min promień
             # zakres srednic monet z lekką tolerancją
             min_d_mm = min(coins.values()) - 1.5
             max_d_mm = max(coins.values()) + 1.5
@@ -138,7 +140,7 @@ with open("wyniki.txt", "w", encoding="utf-8") as wyniki_txt:
             minR = int((min_d_mm / 10 * px_per_cm) / 2)
             maxR = int((max_d_mm / 10 * px_per_cm) / 2)
 
-            # ---------- HOUGH CIRCLES ----------
+            # algorytm Hough
             circles = cv.HoughCircles(
                 gray_for_hough,
                 cv.HOUGH_GRADIENT,
@@ -195,9 +197,9 @@ with open("wyniki.txt", "w", encoding="utf-8") as wyniki_txt:
             cv.putText(
                 preview,
                 f"SUMA: {total_value:.2f} PLN",
-                (30, 80),
-                cv.FONT_HERSHEY_SIMPLEX, 2.0,
-                (0, 0, 255), 4
+                (30, 150),
+                cv.FONT_HERSHEY_SIMPLEX, 5.0,
+                (0, 0, 255), 10
             )
 
             # zapisanie obrazu wynikowego
@@ -210,25 +212,24 @@ with open("wyniki.txt", "w", encoding="utf-8") as wyniki_txt:
                 f"wariant={nazwa_wariantu}, plik={img_name}, "
                 f"suma={total_value:.2f}, monety={detected}\n"
             )
+            wyniki_txt.write("\n")
 
             print(f"  {img_name} -> {total_value:.2f} PLN")
 
-            # ---------- WYŚWIETLENIE WYNIKU ----------
+            # Wyswietlenie wynikow
             show_name = f"Wynik: {img_name} (Nacisnij klawisz)"
             cv.namedWindow(show_name, cv.WINDOW_NORMAL)
             cv.imshow(show_name, preview)
             key = cv.waitKey(0)
             cv.destroyWindow(show_name)
 
-            if key == 27:  # ESC przerywa cały program
+            if key == 27:  # esc przerywa caly program
                 print("Przerwano przez użytkownika.")
                 exit()
 
-    # ---------- PODSUMOWANIE KOŃCOWE ----------
-    print("\n" + "=" * 50)
-    print("FINALNE PODSUMOWANIE DLA WSZYSTKICH WARIANTÓW:")
-    wyniki_txt.write("\n" + "=" * 50 + "\n")
-    wyniki_txt.write("FINALNE PODSUMOWANIE DLA WSZYSTKICH WARIANTÓW:\n")
+    # Podsumowanie wynikow
+    print("\nPodsumowanie:")
+    wyniki_txt.write("\nPodsumowanie::\n")
 
     for w, stats in summary.items():
         podsumowanie_str = (f"Wariant: {w:10} | "
@@ -237,4 +238,4 @@ with open("wyniki.txt", "w", encoding="utf-8") as wyniki_txt:
         print(podsumowanie_str)
         wyniki_txt.write(podsumowanie_str + "\n")
 
-print("\nZAKOŃCZONO PRZETWARZANIE")
+print("\nKoniec programu")
