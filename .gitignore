@@ -177,5 +177,5 @@ dmypy.json
 build/
 
 # efects
-wynik_detekcji.png
+wyniki/do_sprawozdania/kalibracja.png
 *.pdf
